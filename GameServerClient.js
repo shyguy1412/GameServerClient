@@ -3,7 +3,7 @@ const READY_EVENT = "ready";
 const OPEN_EVENT = "open";
 const CLOSE_EVENT = "close";
 const SEND_EVENT = "send";
-const ERROR_EVENT = "event";
+const ERROR_EVENT = "error";
 const MESSAGE_EVENT = "message";
 const SIGN_OUT_EVENT = "sign_out"
 
@@ -132,6 +132,13 @@ class GameServerSocket extends EventTarget{
       }
     }
 
+    //set socket onError to trigger an event
+    this.socket.onerror = function(e){
+      var event = new Event(ERROR_EVENT);
+      event.data = e;
+      self.dispatchEvent(event);
+    }
+
     //set socket onClose to trigger an event
     this.socket.onclose = function(e){
       var event = new Event(CLOSE_EVENT);
@@ -167,7 +174,9 @@ class GameServerSocket extends EventTarget{
 
   //closes the connection
   close(code = 1000, reason = ""){
-    this.socket.close(code, reason);
+    if(this.isOpen()){
+      this.socket.close(code, reason);
+    }
   }
 
   //load properties of the config file
@@ -281,7 +290,7 @@ class GameServerSocket extends EventTarget{
     var data = this.buildMessage(REQUEST_TYPE, SIGN_OUT_ACTION);
     this.sendJSON(data).finally(() => {
       //dispatch SIGN_OUT event
-      var event = new EVENT(SIGN_OUT_EVENT);
+      var event = new Event(SIGN_OUT_EVENT);
       self.dispatchEvent(event);
     });
   }
